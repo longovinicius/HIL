@@ -62,8 +62,8 @@ Architecture rtl of StateSolver is
     constant MULTIPLIER_DELAY   : integer := 6;
 
     -- Handle Input to do logi
-    signal Avector              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
-    signal Bvector              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
+    signal operand_A_vec              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
+    signal operand_B_vec              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
 
     -- Sequencer
     signal index                : integer range 0 to TOTAL_OPERATIONS;
@@ -71,7 +71,7 @@ Architecture rtl of StateSolver is
 
     -- Multiplier Signals
     signal pipeline_mult        : std_logic_vector(MULTIPLIER_DELAY - 1 downto 0);
-    signal a_factor, b_factor   : fixed_point_data_t;
+    signal operand_A, operand_B   : fixed_point_data_t;
     signal product              : std_logic_vector(63 downto 0);
     
     -- Accumulator
@@ -100,11 +100,11 @@ Begin
     --------------------------------------------------------------------------
     -- Internal Signals
     --------------------------------------------------------------------------
-    Avector(0 to N_SS - 1)  <= Avec_i;
-    Avector(N_SS to TOTAL_OPERATIONS - 1) <= Bvec_i;
+    operand_A_vec(0 to N_SS - 1)  <= Avec_i;
+    operand_A_vec(N_SS to TOTAL_OPERATIONS - 1) <= Bvec_i;
 
-    Bvector(0 to N_SS - 1)  <= Xvec_i;
-    Bvector(N_SS to TOTAL_OPERATIONS - 1) <= Uvec_i;
+    operand_B_vec(0 to N_SS - 1)  <= Xvec_i;
+    operand_B_vec(N_SS to TOTAL_OPERATIONS - 1) <= Uvec_i;
     
     --------------------------------------------------------------------------
     -- Multiplier
@@ -113,13 +113,13 @@ Begin
     Multiplier : StateSolverMultiplier
     port map (
         CLK => sysclk,
-        A => a_factor,
-        B => b_factor,
+        A => operand_A,
+        B => operand_B,
         P => product
     );
 
-    a_factor    <= Avector(index);
-    b_factor    <= Bvector(index);
+    operand_A    <= operand_A_vec(index);
+    operand_B    <= operand_B_vec(index);
     
     --------------------------------------------------------------------------
     -- Sequencer
