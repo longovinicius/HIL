@@ -62,8 +62,8 @@ Architecture rtl of StateSolver is
     constant MULTIPLIER_DELAY   : integer := 6;
 
     -- Handle Input to do logi
-    signal operand_A_vec              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
-    signal operand_B_vec              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
+    signal operand_1_vec              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
+    signal operand_2_vec              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
 
     -- Sequencer
     signal index                : integer range 0 to TOTAL_OPERATIONS;
@@ -71,7 +71,7 @@ Architecture rtl of StateSolver is
 
     -- Multiplier Signals
     signal pipeline_mult        : std_logic_vector(MULTIPLIER_DELAY - 1 downto 0);
-    signal operand_A, operand_B   : fixed_point_data_t;
+    signal operand_1, operand_2   : fixed_point_data_t;
     signal product              : std_logic_vector(63 downto 0);
     
     -- Accumulator
@@ -80,7 +80,7 @@ Architecture rtl of StateSolver is
     --------------------------------------------------------------------------
     -- Components
     --------------------------------------------------------------------------
-    component StateSolverMultiplier
+    component mult_gen_0
     port (
       CLK   : in STD_LOGIC;
       A     : in STD_LOGIC_VECTOR(31 downto 0);
@@ -100,26 +100,26 @@ Begin
     --------------------------------------------------------------------------
     -- Internal Signals
     --------------------------------------------------------------------------
-    operand_A_vec(0 to N_SS - 1)  <= Avec_i;
-    operand_A_vec(N_SS to TOTAL_OPERATIONS - 1) <= Bvec_i;
+    operand_1_vec(0 to N_SS - 1)  <= Avec_i;
+    operand_1_vec(N_SS to TOTAL_OPERATIONS - 1) <= Bvec_i;
 
-    operand_B_vec(0 to N_SS - 1)  <= Xvec_i;
-    operand_B_vec(N_SS to TOTAL_OPERATIONS - 1) <= Uvec_i;
+    operand_2_vec(0 to N_SS - 1)  <= Xvec_i;
+    operand_2_vec(N_SS to TOTAL_OPERATIONS - 1) <= Uvec_i;
     
     --------------------------------------------------------------------------
     -- Multiplier
     -- Note: DSP48 Xilinx IP, optimum pipeline 6
     --------------------------------------------------------------------------
-    Multiplier : StateSolverMultiplier
+    Multiplier : mult_gen_0
     port map (
         CLK => sysclk,
-        A => operand_A,
-        B => operand_B,
+        A => operand_1,
+        B => operand_2,
         P => product
     );
 
-    operand_A    <= operand_A_vec(index);
-    operand_B    <= operand_B_vec(index);
+    operand_1    <= operand_1_vec(index);
+    operand_2    <= operand_2_vec(index);
     
     --------------------------------------------------------------------------
     -- Sequencer
