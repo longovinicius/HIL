@@ -68,14 +68,15 @@ Architecture rtl of StateSolver is
     -- Sequencer
     signal index                : integer range 0 to TOTAL_OPERATIONS;
     signal data_valid           : std_logic := '0';
+    signal operation_active     : std_logic := '0';  -- Nova flag para controlar operação
 
     -- Multiplier Signals
-    signal pipeline_mult        : std_logic_vector(MULTIPLIER_DELAY - 1 downto 0);
+    signal pipeline_mult        : std_logic_vector(MULTIPLIER_DELAY - 1 downto 0) := (others => '0');
     signal operand_1, operand_2   : fixed_point_data_t;
-    signal product              : std_logic_vector(63 downto 0);
+    signal product              : std_logic_vector((FP_TOTAL_BITS*2)-1 downto 0);
     
     -- Accumulator
-    signal acmtr                : std_logic_vector(63 downto 0) := (others => '0');
+    signal acmtr                : std_logic_vector((FP_TOTAL_BITS*2)-1 downto 0) := (others => '0');
 
     --------------------------------------------------------------------------
     -- Components
@@ -83,9 +84,9 @@ Architecture rtl of StateSolver is
     component mult_gen_0
     port (
       CLK   : in STD_LOGIC;
-      A     : in STD_LOGIC_VECTOR(31 downto 0);
-      B     : in STD_LOGIC_VECTOR(31 downto 0);
-      P     : out STD_LOGIC_VECTOR(63 downto 0)
+      A     : in STD_LOGIC_VECTOR(FP_TOTAL_BITS-1 downto 0);
+      B     : in STD_LOGIC_VECTOR(FP_TOTAL_BITS-1 downto 0);
+      P     : out STD_LOGIC_VECTOR((FP_TOTAL_BITS*2)-1 downto 0)
     );
     end component;
 
@@ -94,8 +95,11 @@ Begin
     --------------------------------------------------------------------------
     -- Assign Output
     --------------------------------------------------------------------------
+    -- busy_o recebe '1' se qualquer bit do pipeline_mult for != '0'
+    -- pipeline_mult'range == 7 downto 0. Então (pipeline_mult'range => '0') é um 
+    -- vetor de 8 bits zerados.  
     busy_o      <= '1' when pipeline_mult /= (pipeline_mult'range => '0') else '0';
-    stateResult_o    <= acmtr(stateResult_o'range);
+    stateResult_o <= acmtr(FP_TOTAL_BITS + (FP_TOTAL_BITS/2) - 1 downto FP_TOTAL_BITS/2);
 
     --------------------------------------------------------------------------
     -- Internal Signals
@@ -130,12 +134,18 @@ Begin
 
                 -- Sequencer Factors
                 data_valid <= '0';
-                if index < TOTAL_OPERATIONS - 1 then
-                    index <= index + 1;
-                    data_valid <= '1';
-                elsif start_i = '1' then
+                
+                -- Inicia operação apenas com start_i
+                if start_i = '1' then
                     index <= 0;
                     data_valid <= '1';
+                    operation_active <= '1';
+                -- Continua operação se já estiver ativa
+                elsif operation_active = '1' and index < TOTAL_OPERATIONS - 1 then
+                    index <= index + 1;
+                    data_valid <= '1';
+                else
+                    operation_active <= '0';
                 end if;
 
                 -- Pipeline Multiplier
