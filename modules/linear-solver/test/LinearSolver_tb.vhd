@@ -1,4 +1,4 @@
---! \file		StateSolver_tb.vhd
+--! \file		LinearSolver_tb.vhd
 --!
 --! \brief		stateResult_o = A*X + B*U
 --!
@@ -33,13 +33,13 @@ use work.Solver_pkg.all;
 --------------------------------------------------------------------------
 -- Testbench Entity
 --------------------------------------------------------------------------
-entity StateSolver_tb is
-end entity StateSolver_tb;
+entity LinearSolver_tb is
+end entity LinearSolver_tb;
 
 --------------------------------------------------------------------------
 -- Testbench Architecture
 --------------------------------------------------------------------------
-architecture sim of StateSolver_tb is
+architecture sim of LinearSolver_tb is
 
     --------------------------------------------------------------------------
     -- Constants definition
@@ -76,7 +76,7 @@ begin
     --------------------------------------------------------------------------
     -- Unit Under Test
     --------------------------------------------------------------------------
-    uut: Entity work.StateSolver
+    uut: Entity work.LinearSolver
         generic map (
             N_SS => N_SS_TB,
             N_IN => N_IN_TB

@@ -1,11 +1,12 @@
---! \file		StateSolver.vhd
+--! \file		LinearSolver.vhd
 --!
 --! \brief		stateResult_o = A*X + B*U
 --!
 --! \author		Uriel Abe Contardi (urielcontardi@hotmail.com)
+--! \author		Vinícius de Carvalho Monteiro Longo (longo.vinicius@gmail.com)
 --! \date       23-06-2024
 --!
---! \version    1.0
+--! \version    1.1
 --!
 --! \copyright	Copyright (c) 2024 - All Rights reserved.
 --!
@@ -18,7 +19,7 @@
 --!
 --! \note		Revisions:
 --!				- 1.0	23-06-2024	<urielcontardi@hotmail.com>
---!				First revision.
+--!             - 1.1   15-07-2025  <longo.vinicius@gmail.com>
 --------------------------------------------------------------------------
 -- Default libraries
 --------------------------------------------------------------------------
@@ -34,7 +35,7 @@ use work.Solver_pkg.all;
 --------------------------------------------------------------------------
 -- Entity declaration
 --------------------------------------------------------------------------
-Entity StateSolver is
+Entity LinearSolver is
     generic (
         N_SS    : natural := 5;    -- Number of State Space
         N_IN    : natural := 2     -- Inputs number of State Space
@@ -56,7 +57,7 @@ End entity;
 --------------------------------------------------------------------------
 -- Architecture
 --------------------------------------------------------------------------
-Architecture rtl of StateSolver is
+Architecture rtl of LinearSolver is
     
     constant TOTAL_OPERATIONS   : integer := N_SS+N_IN;
     constant MULTIPLIER_DELAY   : integer := 6;
