@@ -59,7 +59,6 @@ architecture sim of StateSolver_tb is
         x"00020000", x"00020000"
     );
 
-
     --------------------------------------------------------------------------
     -- UUT ports
     --------------------------------------------------------------------------
@@ -112,28 +111,20 @@ begin
     stimulus_process: process
 
     begin
-
-        -- Mantém o start em '0' no início
         start_i_tb <= '0';
-        wait for 2 * CLK_PERIOD; -- Espera um pouco para tudo estabilizar
-
-        -- ** Primeiro Pulso de Start **
-        report "Iniciando a primeira operacao..." severity note;
+        wait for 10 * CLK_PERIOD;
+        start_i_tb <= '1'; 
+        wait for CLK_PERIOD;
+        start_i_tb <= '0';
+        wait until busy_o_tb = '0';
+        wait for 10 * CLK_PERIOD;
         start_i_tb <= '1';
-        wait until rising_edge(sysclk_tb);
+        wait for CLK_PERIOD;
         start_i_tb <= '0';
-        wait for 40 * CLK_PERIOD; 
-
-        -- ** Segundo Pulso de Start **
-        report "Iniciando a segunda operacao..." severity note;
-        start_i_tb <= '1';
-        wait until rising_edge(sysclk_tb);
-        start_i_tb <= '0';
-        wait for 40 * CLK_PERIOD;
-        
-        report "Simulacao finalizada." severity note;
+        wait until busy_o_tb = '0';
+        wait for 10 * CLK_PERIOD;
         finish;
-
     end process;
+
 
 end architecture sim;
