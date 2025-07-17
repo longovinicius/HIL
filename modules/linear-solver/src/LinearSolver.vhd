@@ -60,7 +60,7 @@ End entity;
 Architecture rtl of LinearSolver is
     
     constant TOTAL_OPERATIONS   : integer := N_SS+N_IN;
-    constant MULTIPLIER_DELAY   : integer := 6;
+    constant MULTIPLIER_DELAY   : integer := 11;
 
     -- Handle Input to do logi
     signal operand_1_vec              : vector_fp_t(0 to TOTAL_OPERATIONS - 1);
@@ -96,11 +96,8 @@ Begin
     --------------------------------------------------------------------------
     -- Assign Output
     --------------------------------------------------------------------------
-    -- busy_o recebe '1' se qualquer bit do pipeline_mult for != '0'
-    -- pipeline_mult'range == 7 downto 0. Então (pipeline_mult'range => '0') é um 
-    -- vetor de 8 bits zerados.  
     busy_o      <= '1' when pipeline_mult /= (pipeline_mult'range => '0') else '0';
-    stateResult_o <= acmtr(FP_TOTAL_BITS + (FP_TOTAL_BITS/2) - 1 downto FP_TOTAL_BITS/2);
+    stateResult_o <= acmtr(FP_TOTAL_BITS + N_BITS - 1 downto N_BITS);
 
     --------------------------------------------------------------------------
     -- Internal Signals
@@ -133,31 +130,28 @@ Begin
     begin
         if rising_edge(sysclk) then
 
-                -- Sequencer Factors
-                data_valid <= '0';
+            data_valid <= '0';
                 
-                -- Inicia operação apenas com start_i
-                if start_i = '1' then
-                    index <= 0;
-                    data_valid <= '1';
-                    operation_active <= '1';
-                -- Continua operação se já estiver ativa
-                elsif operation_active = '1' and index < TOTAL_OPERATIONS - 1 then
-                    index <= index + 1;
-                    data_valid <= '1';
-                else
-                    operation_active <= '0';
-                end if;
+            if start_i = '1' then
+                index <= 0;
+                data_valid <= '1';
+                operation_active <= '1';
+            elsif operation_active = '1' and index < TOTAL_OPERATIONS - 1 then
+                index <= index + 1;
+                data_valid <= '1';
+            else
+                operation_active <= '0';
+            end if;
 
-                -- Pipeline Multiplier
-                pipeline_mult <= pipeline_mult(pipeline_mult'left - 1 downto 0) & data_valid;
+            -- Pipeline Multiplier
+            pipeline_mult <= pipeline_mult(pipeline_mult'left - 1 downto 0) & data_valid;
 
-                -- Product adder
-                if start_i = '1' then
-                    acmtr <= (others => '0');
-                elsif pipeline_mult(pipeline_mult'left) = '1' then
-                    acmtr <= std_logic_vector(signed(acmtr) + signed(product));
-                end if;
+            -- Product adder
+            if start_i = '1' then
+                acmtr <= (others => '0');
+            elsif pipeline_mult(pipeline_mult'left) = '1' then
+                acmtr <= std_logic_vector(signed(acmtr) + signed(product));
+            end if;
                     
         end if;
     end process;
