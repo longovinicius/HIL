@@ -2,7 +2,7 @@
 --!
 --! \brief		
 --!
---! \author		Vinícius de Carvalho Monteiro Longo (longo@weg.net)
+--! \author		Vinícius de Carvalho Monteiro Longo (longo.vinicius@gmail.com)
 --! \date       23-07-2025
 --!
 --! \version    1.0
@@ -17,7 +17,7 @@
 --! \warning	None
 --!
 --! \note		Revisions:
---!				- 1.0	23-07-2025	<longo@weg.net>
+--!				- 1.0	23-07-2025	<longo.vinicius@gmail.com>
 --!				First revision.
 
 library ieee;
@@ -33,8 +33,8 @@ entity HIL_TOP is
 
         
         GPIO_LED0               : out std_logic;
-        GPIO_SW_C               : in std_logic;
-        Xvec_current_o          : out vector_fp_t(0 to 5 - 1)
+        GPIO_SW_C               : in std_logic--;
+        --Xvec_current_o          : out vector_fp_t(0 to 5 - 1)
     );
 end entity HIL_TOP;
 
@@ -46,7 +46,7 @@ architecture arch of HIL_TOP is
     constant N_IN           : natural := 2;
     constant VDC_VOLTAGE    : integer := 400;
     constant RESET_TRSHD    : integer := 100;   
-    constant START_PERIOD   : integer := 100;
+    constant START_PERIOD   : integer := 50;
     
     constant L1             : real := 0.01;
     constant R1             : real := 0.1;
@@ -161,7 +161,7 @@ begin
                     start_signal  <= '0';
                 else
                     start_ctr     <= (others => '0');
-                    start_signal  <= '1'; -- Gera um pulso de 1 ciclo
+                    start_signal  <= '1'; 
                 end if;
             else
                 start_ctr     <= (others => '0');
@@ -208,20 +208,25 @@ begin
     );
 
     --------------------------------------------------------------------------
-    -- Lógica do LED de Atividade
+    -- Serial Manager
     --------------------------------------------------------------------------
-    GPIO_LED0 <= busy_o_sig;
-    Xvec_current_o <= Xvec_current_o_sig;
 
     --------------------------------------------------------------------------
-    -- Instanciação do ILA (ChipScope) para depuração em hardware
+    -- Output signals
+    --------------------------------------------------------------------------
+    GPIO_LED0 <= busy_o_sig;
+    --Xvec_current_o <= Xvec_current_o_sig;
+
+    --------------------------------------------------------------------------
+    -- ILA scope
     --------------------------------------------------------------------------
     chiscope_inst : entity work.ila_0
         port map(
             clk         => sysclk_100mhz,
-            probe0      => start_signal,               
-            probe1      => busy_o_sig,                 
-            probe2      => std_logic_vector(Xvec_current_o_sig(2)) -- Ver o primeiro elemento do resultado
+            probe0      => start_signal,
+            probe1      => pmod_sync_s2,               
+            probe2      => busy_o_sig,                 
+            probe3      => std_logic_vector(Xvec_current_o_sig(2)) 
         );
 
 end architecture arch;
