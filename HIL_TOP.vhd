@@ -33,7 +33,8 @@ entity HIL_TOP is
 
         
         GPIO_LED0               : out std_logic;
-        GPIO_SW_C               : in std_logic
+        GPIO_SW_C               : in std_logic;
+        Xvec_current_o          : out vector_fp_t(0 to 5 - 1)
     );
 end entity HIL_TOP;
 
@@ -45,7 +46,7 @@ architecture arch of HIL_TOP is
     constant N_IN           : natural := 2;
     constant VDC_VOLTAGE    : integer := 400;
     constant RESET_TRSHD    : integer := 100;   
-    constant START_PERIOD   : integer := 50e6;
+    constant START_PERIOD   : integer := 100;
     
     constant L1             : real := 0.01;
     constant R1             : real := 0.1;
@@ -209,7 +210,8 @@ begin
     --------------------------------------------------------------------------
     -- Lógica do LED de Atividade
     --------------------------------------------------------------------------
-    GPIO_LED0 <= busy_o_sig; -- Acende o LED enquanto o Manager estiver ocupado
+    GPIO_LED0 <= busy_o_sig;
+    Xvec_current_o <= Xvec_current_o_sig;
 
     --------------------------------------------------------------------------
     -- Instanciação do ILA (ChipScope) para depuração em hardware
@@ -219,7 +221,7 @@ begin
             clk         => sysclk_100mhz,
             probe0      => start_signal,               
             probe1      => busy_o_sig,                 
-            probe2      => std_logic_vector(Xvec_current_o_sig(0)) -- Ver o primeiro elemento do resultado
+            probe2      => std_logic_vector(Xvec_current_o_sig(2)) -- Ver o primeiro elemento do resultado
         );
 
 end architecture arch;
