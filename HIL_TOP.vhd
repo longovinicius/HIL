@@ -30,49 +30,53 @@ entity HIL_TOP is
         SYSCLK_P                : in std_logic;
         SYSCLK_N                : in std_logic;
         PMOD6_PIN1_R            : in std_logic;
-
         
         GPIO_LED0               : out std_logic;
-        GPIO_SW_C               : in std_logic--;
-        --Xvec_current_o          : out vector_fp_t(0 to 5 - 1)
-    );
+        GPIO_SW_C               : in std_logic;
+
+        serial_data_out         : out std_logic_vector(0 to 4)
+        
+);
 end entity HIL_TOP;
 
 architecture arch of HIL_TOP is
     --------------------------------------------------------------------------
     -- Constants
     --------------------------------------------------------------------------
-    constant N_SS           : natural := 5;
-    constant N_IN           : natural := 2;
-    constant VDC_VOLTAGE    : integer := 400;
-    constant RESET_TRSHD    : integer := 100;   
-    constant START_PERIOD   : integer := 50;
+    constant CLK_FREQ           : integer := 200_000_000; 
+    constant N_SS               : natural := 5;
+    constant N_IN               : natural := 2;
+    constant VDC_VOLTAGE        : integer := 400;
+    constant RESET_TRSHD        : integer := 100;   
+    constant START_PERIOD       : integer := 50;
+    constant SERIAL_BAUD_RATE   : integer := 1_042_000;
+    constant SERIAL_INTERVAL_US : integer := 200;
     
-    constant L1             : real := 0.01;
-    constant R1             : real := 0.1;
-    constant C1             : real := 180.0e-6;
-    constant L2             : real := 0.01;
-    constant R2             : real := 0.1;
-    constant C2             : real := 90.0e-6;
-    constant Rd             : real := 2.5;
-    constant Ld             : real := 3.0e-3;
-    constant Ts             : real := 1.0e-6;
+    constant L1                 : real := 0.01;
+    constant R1                 : real := 0.1;
+    constant Cf                 : real := 180.0e-6;
+    constant L2                 : real := 0.01;
+    constant R2                 : real := 0.1;
+    constant Cd                 : real := 90.0e-6;
+    constant Rd                 : real := 2.5;
+    constant Ld                 : real := 3.0e-3;
+    constant Ts                 : real := 1.0e-6;
 
-    constant a00            : real := 1.0 - (R1/L1)*Ts;
-    constant a03            : real := (-1.0/L1)*Ts;
-    constant a13            : real := (1.0/Ld)*Ts;  
-    constant a14            : real := (-1.0/Ld)*Ts; 
-    constant a22            : real := 1.0 - (R2/L2)*Ts;
-    constant a23            : real := (1.0/L2)*Ts;
-    constant a30            : real := (1.0/C1)*Ts;
-    constant a31            : real := (-1.0/C1)*Ts;
-    constant a32            : real := (-1.0/C1)*Ts;
-    constant a33            : real := 1.0 - (1.0/(C1*Rd))*Ts;
-    constant a34            : real := (1.0/(C1*Rd))*Ts;
-    constant a41            : real := (1.0/C2)*Ts;
-    constant a43            : real := (1.0/(C2*Rd))*Ts;
-    constant a44            : real := 1.0 - (1.0/(C2*Rd))*Ts;
-    constant b00            : real := (1.0/L1)*Ts;
+    constant a00                : real := 1.0 - (R1/L1)*Ts;
+    constant a03                : real := (-1.0/L1)*Ts;
+    constant a13                : real := (1.0/Ld)*Ts;  
+    constant a14                : real := (-1.0/Ld)*Ts; 
+    constant a22                : real := 1.0 - (R2/L2)*Ts;
+    constant a23                : real := (1.0/L2)*Ts;
+    constant a30                : real := (1.0/Cf)*Ts;
+    constant a31                : real := (-1.0/Cf)*Ts;
+    constant a32                : real := (-1.0/Cf)*Ts;
+    constant a33                : real := 1.0 - (1.0/(Cf*Rd))*Ts;
+    constant a34                : real := (1.0/(Cf*Rd))*Ts;
+    constant a41                : real := (1.0/Cd)*Ts;
+    constant a43                : real := (1.0/(Cd*Rd))*Ts;
+    constant a44                : real := 1.0 - (1.0/(Cd*Rd))*Ts;
+    constant b00                : real := (1.0/L1)*Ts;
 
 
     constant AMATRIX_C : matrix_fp_t(0 to N_SS - 1, 0 to N_SS - 1) := (
@@ -98,27 +102,27 @@ architecture arch of HIL_TOP is
     --------------------------------------------------------------------------
     -- Signals
     --------------------------------------------------------------------------
-    signal sysclk_100mhz        : std_logic;
+    signal sysclk_200mhz        : std_logic;
     signal reset_n              : std_logic := '0';
     signal reset_ctr            : unsigned(16 downto 0) := (others => '0');
     signal inverver_signal      : std_logic_vector(FP_TOTAL_BITS-1 downto 0);
 
-    signal Xvec_current_o_sig  : vector_fp_t(0 to N_SS - 1);
-    signal busy_o_sig          : std_logic;
+    signal Xvec_current_o_sig   : vector_fp_t(0 to N_SS - 1);
+    signal tx_out_sig           : std_logic_vector(0 to N_SS - 1);
+    signal busy_o_sig           : std_logic;
 
     signal start_signal         : std_logic;
     signal start_ctr            : unsigned(26 downto 0) := (others => '0'); 
     signal Uvector              : vector_fp_t(0 to N_IN - 1) := (others => (others => '0') ); 
 
-    -- 2 stage sync signals for pmod input
-    signal pmod_sync_s1 : std_logic;
-    signal pmod_sync_s2 : std_logic;
+    signal pmod_sync_s1         : std_logic;
+    signal pmod_sync_s2         : std_logic;
 
 begin
 
-    Synchronizer_Process: process (sysclk_100mhz)
+    Synchronizer_Process: process (sysclk_200mhz)
     begin
-        if rising_edge(sysclk_100mhz) then
+        if rising_edge(sysclk_200mhz) then
             pmod_sync_s1 <= PMOD6_PIN1_R;
             pmod_sync_s2 <= pmod_sync_s1;
         end if;
@@ -131,15 +135,15 @@ begin
         port map(
             clk_in1_p => SYSCLK_P,
             clk_in1_n => SYSCLK_N,
-            clk_out1  => sysclk_100mhz
+            clk_out1  => sysclk_200mhz
         );
 
     --------------------------------------------------------------------------
     -- reset_n inicialization
     --------------------------------------------------------------------------
-    process (sysclk_100mhz)
+    process (sysclk_200mhz)
     begin
-        if rising_edge(sysclk_100mhz) then
+        if rising_edge(sysclk_200mhz) then
             if reset_ctr < RESET_TRSHD then
                 reset_ctr <= reset_ctr + 1;
                 reset_n   <= '0';
@@ -152,9 +156,9 @@ begin
     --------------------------------------------------------------------------
     -- periodic start signal
     --------------------------------------------------------------------------
-    process (sysclk_100mhz)
+    process (sysclk_200mhz)
     begin
-        if rising_edge(sysclk_100mhz) then
+        if rising_edge(sysclk_200mhz) then
             if reset_n = '1' then
                 if start_ctr < START_PERIOD - 1 then
                     start_ctr     <= start_ctr + 1;
@@ -180,7 +184,7 @@ begin
         FP_FRACTION_BITS    => FP_FRACTION_BITS
     )
     port map (
-        sysclk              => sysclk_100mhz,
+        sysclk              => sysclk_200mhz,
         pwm_signal          => pmod_sync_s2,
         v_in                => inverver_signal
     );
@@ -196,7 +200,7 @@ begin
         N_IN            => N_IN
     )
     port map (
-        sysclk         => sysclk_100mhz,
+        sysclk         => sysclk_200mhz,
         reset_n        => reset_n,
         init_calc_i    => start_signal, 
         Amatrix_i      => AMATRIX_C,
@@ -210,23 +214,38 @@ begin
     --------------------------------------------------------------------------
     -- Serial Manager
     --------------------------------------------------------------------------
+    SerialManager_gen : for index in 0 to N_SS-1 generate
+        UUT_SerialManager : entity work.SerialManager
+            generic map (
+                CLK_FREQ          => CLK_FREQ,
+                SEND_INTERVAL_US  => SERIAL_INTERVAL_US,
+                BAUD_RATE         => SERIAL_BAUD_RATE
+            )
+            port map (
+                sysclk            => sysclk_200mhz,
+                reset_n           => reset_n,
+                data_in_i         => Xvec_current_o_sig(index),
+                tx_o              => tx_out_sig(index)
+            );
+
+        serial_data_out(index) <= tx_out_sig(index);
+    end generate;
 
     --------------------------------------------------------------------------
     -- Output signals
     --------------------------------------------------------------------------
     GPIO_LED0 <= busy_o_sig;
-    --Xvec_current_o <= Xvec_current_o_sig;
-
+    Serial_data_out <= tx_out_sig;
     --------------------------------------------------------------------------
     -- ILA scope
     --------------------------------------------------------------------------
-    chiscope_inst : entity work.ila_0
-        port map(
-            clk         => sysclk_100mhz,
-            probe0      => start_signal,
-            probe1      => pmod_sync_s2,               
-            probe2      => busy_o_sig,                 
-            probe3      => std_logic_vector(Xvec_current_o_sig(2)) 
-        );
+    -- chiscope_inst : entity work.ila_0
+    --     port map(
+    --         clk         => sysclk_200mhz,
+    --         probe0      => start_signal,
+    --         probe1      => pmod_sync_s2,               
+    --         probe2      => busy_o_sig--,                 
+    --         -- probe3      => std_logic_vector(tx_out_sig(2)) 
+    --     );
 
 end architecture arch;
