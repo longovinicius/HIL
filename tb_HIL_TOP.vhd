@@ -1,9 +1,34 @@
+--! \file		tb_HIL_TOP.vhd
+--!
+--! \brief		
+--!
+--! \author		Vinicius Longo (longo.vinicius@gmail.com)
+--! \date       25-07-2025
+--!
+--! \version    1.0
+--!
+--! \copyright	Copyright (c) 2025 WEG - All Rights reserved.
+--!
+--! \note		Target devices : No specific target
+--! \note		Tool versions  : No specific tool
+--! \note		Dependencies   : No specific dependencies
+--!
+--! \ingroup	None
+--! \warning	None
+--!
+--! \note		Revisions:
+--!				- 1.0	25-07-2025	<longo.vinicius@gmail.com>
+--!				First revision.
+
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.env.finish;
 
--- Importar o seu pacote para os tipos de dados
+library std; 
+use std.textio.all;
+
 use work.Solver_pkg.all;
 
 entity tb_HIL_TOP is
@@ -11,41 +36,34 @@ end entity tb_HIL_TOP;
 
 architecture sim of tb_HIL_TOP is
 
-    -- Constantes do Testbench
-    constant CLK_FREQ_TB : integer := 100_000_000; -- Clock de 100MHz
-    constant CLK_PERIOD  : time    := 10 ns;
+    constant CLK_FREQ_TB        : integer := 200_000_000; -- Clock de 100MHz
+    constant CLK_PERIOD         : time    := 5 ns;
 
-    -- Sinais para o Clock e Reset
-    signal clk_tb : std_logic := '0';
-    signal rst_tb : std_logic;
+    signal clk_tb               : std_logic := '0';
+    signal rst_tb               : std_logic;
 
-    -- Sinais para conectar ao Gerador SPWM
-    signal spwm_out_tb      : std_logic;
-    signal sine_out_tb      : std_logic_vector(47 downto 0);
-    signal triangular_out_tb: std_logic_vector(47 downto 0);
+    signal spwm_out_tb          : std_logic;
+    signal sine_out_tb          : std_logic_vector(47 downto 0);
+    signal triangular_out_tb    : std_logic_vector(47 downto 0);
 
-    -- Sinais para conectar ao HIL_TOP (UUT)
-    signal sysclk_p_tb        : std_logic;
-    signal sysclk_n_tb        : std_logic;
-    signal pmod_in_tb         : std_logic;
-    signal gpio_led0_tb       : std_logic;
-    signal gpio_sw_c_tb       : std_logic := '0'; -- Não utilizado, mantido em '0'
-    -- Sinal para visualizar os 5 estados de saída!
-    signal xvec_out_tb        : vector_fp_t(0 to 5 - 1);
+    signal sysclk_p_tb          : std_logic;
+    signal sysclk_n_tb          : std_logic;
+    signal pmod_in_tb           : std_logic;
+    signal gpio_led0_tb         : std_logic;
+    signal gpio_sw_c_tb         : std_logic := '0'; 
+
+    signal serial_data_out_tb   : std_logic_vector(0 to 4);
 
 begin
 
     ----------------------------------------------------
-    -- Geração de Clock e Reset
+    -- Clock and Reset Generation
     ----------------------------------------------------
-    -- Gera o clock principal de 100MHz
     clk_tb <= not clk_tb after CLK_PERIOD / 2;
 
-    -- Gera um clock diferencial para o HIL_TOP
     sysclk_p_tb <= clk_tb;
     sysclk_n_tb <= not clk_tb;
 
-    -- Gera um pulso de reset no início da simulação
     reset_process: process
     begin
         rst_tb <= '1';
@@ -55,7 +73,7 @@ begin
     end process;
 
     ----------------------------------------------------
-    -- 1. Instanciação do Gerador de Estímulo (SPWM)
+    -- SPWM Generator Instantiation 
     ----------------------------------------------------
     SPWM_Generator_inst : entity work.spwm_top
         generic map (
@@ -74,11 +92,10 @@ begin
             spwm_out        => spwm_out_tb
         );
 
-    -- O sinal de entrada do PMOD do HIL é a saída do gerador SPWM
     pmod_in_tb <= spwm_out_tb;
 
     ----------------------------------------------------
-    -- 2. Instanciação da Unidade Sob Teste (HIL_TOP)
+    -- UUT HIL instantiation
     ----------------------------------------------------
     UUT_HIL : entity work.HIL_TOP
         port map (
@@ -87,15 +104,64 @@ begin
             PMOD6_PIN1_R     => pmod_in_tb,
             GPIO_LED0        => gpio_led0_tb,
             GPIO_SW_C        => gpio_sw_c_tb,
-            Xvec_current_o   => xvec_out_tb
+            Serial_data_out  => serial_data_out_tb
         );
 
+    -- tb_HIL_TOP.vhd (dentro da arquitetura)
+
     ----------------------------------------------------
-    -- Processo de Término da Simulação
+    -- Processo para salvar os dados em .csv
+    ----------------------------------------------------
+    csv_writer_process: process
+        -- Variáveis para manipulação de ficheiros de texto
+        file csv_file           : TEXT;
+        variable L              : LINE;
+        -- Variável para controlar o intervalo de amostragem
+        variable sample_counter : integer := 0;
+        constant SAMPLE_PERIOD_CYCLES : integer := 200; -- Amostrar a cada 200 ciclos (200 * 5ns = 1us)
+    begin
+        -- Abrir o ficheiro para escrita e escrever o cabeçalho
+        file_open(csv_file, "output_data.csv", WRITE_MODE);
+        write(L, string'("Tempo(us),SPWM_In,Busy_Out"));
+        -- Adicionar cabeçalhos para os 5 sinais seriais
+        for i in 0 to 4 loop
+            write(L, string'(",Serial_Out_") & integer'image(i));
+        end loop;
+        writeline(csv_file, L);
+
+        -- Loop principal de amostragem e escrita
+        loop
+            wait until rising_edge(clk_tb);
+            if rst_tb = '0' then -- Só começa a escrever depois do reset
+                if sample_counter < SAMPLE_PERIOD_CYCLES - 1 then
+                    sample_counter := sample_counter + 1;
+                else
+                    sample_counter := 0; -- Reinicia o contador
+
+                    -- Escreve o tempo atual em microssegundos
+                    write(L, real(NOW / 1 us));
+
+                    -- Escreve os sinais de 1 bit
+                    write(L, string'("," & std_ulogic'image(spwm_out_tb)(2)));
+                    write(L, string'("," & std_ulogic'image(gpio_led0_tb)(2)));
+
+                    -- Escreve os 5 sinais de saída serial
+                    for i in 0 to 4 loop
+                        write(L, string'("," & std_ulogic'image(serial_data_out_tb(i))(2)));
+                    end loop;
+
+                    -- Escreve a linha completa no ficheiro
+                    writeline(csv_file, L);
+                end if;
+            end if;
+        end loop;
+    end process;
+
+    ----------------------------------------------------
+    -- End simulation stimulus
     ----------------------------------------------------
     simulation_killer: process
     begin
-        -- Deixa a simulação correr por 25ms para ver alguns ciclos do SPWM
         wait for 500 ms;
         finish;
     end process;
