@@ -53,6 +53,7 @@ architecture sim of tb_HIL_TOP is
     signal gpio_sw_c_tb         : std_logic := '0'; 
 
     signal serial_data_out_tb   : std_logic_vector(0 to 4);
+    signal serial_curr_L2_out_tb: std_logic;
 
 begin
 
@@ -97,6 +98,16 @@ begin
     ----------------------------------------------------
     -- UUT HIL instantiation
     ----------------------------------------------------
+    -- UUT_HIL : entity work.HIL_TOP
+    --     port map (
+    --         SYSCLK_P         => sysclk_p_tb,
+    --         SYSCLK_N         => sysclk_n_tb,
+    --         PMOD6_PIN1_R     => pmod_in_tb,
+    --         GPIO_LED0        => gpio_led0_tb,
+    --         GPIO_SW_C        => gpio_sw_c_tb,
+    --         Serial_data_out  => serial_data_out_tb
+    --     );
+
     UUT_HIL : entity work.HIL_TOP
         port map (
             SYSCLK_P         => sysclk_p_tb,
@@ -104,7 +115,8 @@ begin
             PMOD6_PIN1_R     => pmod_in_tb,
             GPIO_LED0        => gpio_led0_tb,
             GPIO_SW_C        => gpio_sw_c_tb,
-            Serial_data_out  => serial_data_out_tb
+            FT4232_B_UART_RX  => serial_curr_L2_out_tb,
+            PMOD6_PIN3_R => open
         );
 
     -- tb_HIL_TOP.vhd (dentro da arquitetura)
@@ -112,50 +124,50 @@ begin
     ----------------------------------------------------
     -- Processo para salvar os dados em .csv
     ----------------------------------------------------
-    csv_writer_process: process
-        -- Variáveis para manipulação de ficheiros de texto
-        file csv_file           : TEXT;
-        variable L              : LINE;
-        -- Variável para controlar o intervalo de amostragem
-        variable sample_counter : integer := 0;
-        constant SAMPLE_PERIOD_CYCLES : integer := 200; -- Amostrar a cada 200 ciclos (200 * 5ns = 1us)
-    begin
-        -- Abrir o ficheiro para escrita e escrever o cabeçalho
-        file_open(csv_file, "output_data.csv", WRITE_MODE);
-        write(L, string'("Tempo(us),SPWM_In,Busy_Out"));
-        -- Adicionar cabeçalhos para os 5 sinais seriais
-        for i in 0 to 4 loop
-            write(L, string'(",Serial_Out_") & integer'image(i));
-        end loop;
-        writeline(csv_file, L);
+    -- csv_writer_process: process
+    --     -- Variáveis para manipulação de ficheiros de texto
+    --     file csv_file           : TEXT;
+    --     variable L              : LINE;
+    --     -- Variável para controlar o intervalo de amostragem
+    --     variable sample_counter : integer := 0;
+    --     constant SAMPLE_PERIOD_CYCLES : integer := 200; -- Amostrar a cada 200 ciclos (200 * 5ns = 1us)
+    -- begin
+    --     -- Abrir o ficheiro para escrita e escrever o cabeçalho
+    --     file_open(csv_file, "output_data.csv", WRITE_MODE);
+    --     write(L, string'("Tempo(us),SPWM_In,Busy_Out"));
+    --     -- Adicionar cabeçalhos para os 5 sinais seriais
+    --     for i in 0 to 4 loop
+    --         write(L, string'(",Serial_Out_") & integer'image(i));
+    --     end loop;
+    --     writeline(csv_file, L);
 
-        -- Loop principal de amostragem e escrita
-        loop
-            wait until rising_edge(clk_tb);
-            if rst_tb = '0' then -- Só começa a escrever depois do reset
-                if sample_counter < SAMPLE_PERIOD_CYCLES - 1 then
-                    sample_counter := sample_counter + 1;
-                else
-                    sample_counter := 0; -- Reinicia o contador
+    --     -- Loop principal de amostragem e escrita
+    --     loop
+    --         wait until rising_edge(clk_tb);
+    --         if rst_tb = '0' then -- Só começa a escrever depois do reset
+    --             if sample_counter < SAMPLE_PERIOD_CYCLES - 1 then
+    --                 sample_counter := sample_counter + 1;
+    --             else
+    --                 sample_counter := 0; -- Reinicia o contador
 
-                    -- Escreve o tempo atual em microssegundos
-                    write(L, real(NOW / 1 us));
+    --                 -- Escreve o tempo atual em microssegundos
+    --                 write(L, real(NOW / 1 us));
 
-                    -- Escreve os sinais de 1 bit
-                    write(L, string'("," & std_ulogic'image(spwm_out_tb)(2)));
-                    write(L, string'("," & std_ulogic'image(gpio_led0_tb)(2)));
+    --                 -- Escreve os sinais de 1 bit
+    --                 write(L, string'("," & std_ulogic'image(spwm_out_tb)(2)));
+    --                 write(L, string'("," & std_ulogic'image(gpio_led0_tb)(2)));
 
-                    -- Escreve os 5 sinais de saída serial
-                    for i in 0 to 4 loop
-                        write(L, string'("," & std_ulogic'image(serial_data_out_tb(i))(2)));
-                    end loop;
+    --                 -- Escreve os 5 sinais de saída serial
+    --                 for i in 0 to 4 loop
+    --                     write(L, string'("," & std_ulogic'image(serial_data_out_tb(i))(2)));
+    --                 end loop;
 
-                    -- Escreve a linha completa no ficheiro
-                    writeline(csv_file, L);
-                end if;
-            end if;
-        end loop;
-    end process;
+    --                 -- Escreve a linha completa no ficheiro
+    --                 writeline(csv_file, L);
+    --             end if;
+    --         end if;
+    --     end loop;
+    -- end process;
 
     ----------------------------------------------------
     -- End simulation stimulus
