@@ -23,7 +23,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.Solver_pkg.all;
+use work.SolverPkg.all;
 
 entity HIL_TOP is
     port (
@@ -35,9 +35,7 @@ entity HIL_TOP is
         GPIO_SW_C               : in std_logic;
 
         FT4232_B_UART_RX        : out std_logic;
-        PMOD6_PIN3_R            : out std_logic
-        --serial_data_out         : out std_logic_vector(0 to 4)
-        
+        PMOD6_PIN3_R            : out std_logic        
 );
 end entity HIL_TOP;
 
@@ -50,7 +48,7 @@ architecture arch of HIL_TOP is
     constant N_IN               : natural := 2;
     constant VDC_VOLTAGE        : integer := 400;
     constant RESET_TRSHD        : integer := 100;   
-    constant START_PERIOD       : integer := 200; -- TODO: Investigar
+    constant START_PERIOD       : integer := 200; 
     constant SERIAL_BAUD_RATE   : integer := 1_042_000;
     constant SERIAL_INTERVAL_US : integer := 200;
     
@@ -64,20 +62,20 @@ architecture arch of HIL_TOP is
     constant Ld                 : real := 5.1e-3;
     constant Ts                 : real := 1.0e-6;
 
-    constant a00                : real := 1.0 - (R1/L1)*Ts; -- ok
-    constant a03                : real := (-1.0/L1)*Ts; -- ok
-    constant a13                : real := (1.0/Ld)*Ts;  -- ok
-    constant a14                : real := (-1.0/Ld)*Ts; -- ok 
-    constant a22                : real := 1.0 - (R2/L2)*Ts; -- ok
-    constant a23                : real := (1.0/L2)*Ts; -- ok
-    constant a30                : real := (1.0/Cf)*Ts; -- ok
-    constant a31                : real := (-1.0/Cf)*Ts; -- ok
-    constant a32                : real := (-1.0/Cf)*Ts; -- ok 
-    constant a33                : real := 1.0 - (1.0/(Cf*Rd))*Ts; -- ok
-    constant a34                : real := (1.0/(Cf*Rd))*Ts; -- ok
-    constant a41                : real := (1.0/Cd)*Ts; -- ok
-    constant a43                : real := (1.0/(Cd*Rd))*Ts; -- ok
-    constant a44                : real := 1.0 - (1.0/(Cd*Rd))*Ts; -- ok
+    constant a00                : real := 1.0 - (R1/L1)*Ts; 
+    constant a03                : real := (-1.0/L1)*Ts; 
+    constant a13                : real := (1.0/Ld)*Ts;  
+    constant a14                : real := (-1.0/Ld)*Ts; 
+    constant a22                : real := 1.0 - (R2/L2)*Ts; 
+    constant a23                : real := (1.0/L2)*Ts; 
+    constant a30                : real := (1.0/Cf)*Ts; 
+    constant a31                : real := (-1.0/Cf)*Ts; 
+    constant a32                : real := (-1.0/Cf)*Ts; 
+    constant a33                : real := 1.0 - (1.0/(Cf*Rd))*Ts; 
+    constant a34                : real := (1.0/(Cf*Rd))*Ts; 
+    constant a41                : real := (1.0/Cd)*Ts;
+    constant a43                : real := (1.0/(Cd*Rd))*Ts; 
+    constant a44                : real := 1.0 - (1.0/(Cd*Rd))*Ts; 
     constant b00                : real := (1.0/L1)*Ts;
 
 
@@ -198,7 +196,7 @@ begin
     --------------------------------------------------------------------------
     -- LSM
     --------------------------------------------------------------------------
-    LSM_inst : entity work.LinearSolver_Manager
+    LSM_inst : entity work.LinearSolverManager
     generic map (
         N_SS            => N_SS,
         N_IN            => N_IN
@@ -218,23 +216,6 @@ begin
     --------------------------------------------------------------------------
     -- Serial Manager
     --------------------------------------------------------------------------
-    -- SerialManager_gen : for index in 0 to N_SS-1 generate
-    --     UUT_SerialManager : entity work.SerialManager
-    --         generic map (
-    --             CLK_FREQ          => CLK_FREQ,
-    --             SEND_INTERVAL_US  => SERIAL_INTERVAL_US,
-    --             BAUD_RATE         => SERIAL_BAUD_RATE
-    --         )
-    --         port map (
-    --             sysclk            => sysclk_200mhz,
-    --             reset_n           => reset_n,
-    --             data_in_i         => Xvec_current_o_sig(index),
-    --             tx_o              => tx_out_sig(index)
-    --         );
-
-    --     serial_data_out(index) <= tx_out_sig(index);
-    -- end generate;
-
     UUT_SerialManager : entity work.SerialManager
         generic map (
             CLK_FREQ          => CLK_FREQ,
@@ -253,16 +234,5 @@ begin
     GPIO_LED0 <= busy_o_sig;
     FT4232_B_UART_RX <= serial_curr_L2_o;
     PMOD6_PIN3_R <= serial_curr_L2_o;
-    --------------------------------------------------------------------------
-    -- ILA scope
-    --------------------------------------------------------------------------
-    -- chiscope_inst : entity work.ila_0
-    --     port map(
-    --         clk         => sysclk_200mhz,
-    --         probe0      => start_signal,
-    --         probe1      => pmod_sync_s2,               
-    --         probe2      => busy_o_sig,                 
-    --         probe3      => serial_curr_L2_o
-    --     );
 
 end architecture arch;

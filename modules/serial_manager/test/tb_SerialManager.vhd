@@ -27,7 +27,7 @@ use ieee.numeric_std.all;
 use std.env.finish;
 
 -- Importar o seu pacote para os tipos de dados, como 'fixed_point_data_t'
-use work.Solver_pkg.all;
+use work.SolverPkg.all;
 
 entity tb_SerialManager is
 end entity tb_SerialManager;
