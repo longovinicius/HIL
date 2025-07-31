@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-entity sine_generator is
+entity SineLUT is
     generic (
         TABLE_SIZE  : integer := 64;   -- Tamanho da LUT
         DATA_WIDTH  : integer := 8;    -- Largura dos dados de saída
@@ -15,9 +15,9 @@ entity sine_generator is
         enable  : in  std_logic;
         dout    : out std_logic_vector(DATA_WIDTH-1 downto 0)
     );
-end sine_generator;
+end SineLUT;
 
-architecture behavioral of sine_generator is
+architecture behavioral of SineLUT is
     -- Determina a largura efetiva para cálculos
     constant EFFECTIVE_WIDTH : integer := minimum(DATA_WIDTH, CALC_WIDTH);
     

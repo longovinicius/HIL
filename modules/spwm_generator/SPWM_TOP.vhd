@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity spwm_top is
+entity SPWM_TOP is
     generic (
         CLK_FREQ        : integer := 200_000_000;
         SINE_FREQ       : integer := 50;
@@ -18,9 +18,9 @@ entity spwm_top is
         triangular_out : out std_logic_vector(DATA_WIDTH-1 downto 0);
         spwm_out    : out std_logic
     );
-end spwm_top;
+end SPWM_TOP;
 
-architecture Behavioral of spwm_top is
+architecture Behavioral of SPWM_TOP is
     constant EFFECTIVE_WIDTH : integer := minimum(DATA_WIDTH, 32);
     
     signal sine_signal : std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -32,7 +32,7 @@ architecture Behavioral of spwm_top is
     
 begin
     -- Geradores (sem mudança)
-    sine_gen : entity work.sine_top
+    sine_gen : entity work.SineGenerator
         generic map (
             CLK_FREQ    => CLK_FREQ,
             SINE_FREQ   => SINE_FREQ,
@@ -46,7 +46,7 @@ begin
             dout => sine_signal
         );
     
-    triangular_gen : entity work.triangular_generator
+    triangular_gen : entity work.TriangularWave
         generic map (
             CLK_FREQ        => CLK_FREQ,
             SWITCHING_FREQ  => SWITCHING_FREQ,
@@ -59,7 +59,7 @@ begin
         );
     
     -- Comparador usa DATA_WIDTH completo
-    spwm_comp : entity work.spwm_comparator
+    spwm_comp : entity work.SPWMComparator
         generic map (
             DATA_WIDTH => DATA_WIDTH  -- Usa largura COMPLETA
         )

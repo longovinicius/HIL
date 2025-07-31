@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity enable_generator is
+entity EnableGenerator is
     generic (
         CLK_FREQ    : integer := 100_000_000;  -- Frequência do clock (100 MHz)
         SINE_FREQ   : integer := 60;            -- Frequência desejada da senoide (60 Hz)
@@ -13,9 +13,9 @@ entity enable_generator is
         rst     : in  std_logic;
         enable  : out std_logic                  -- Sinal de enable para a senoide
     );
-end enable_generator;
+end EnableGenerator;
 
-architecture behavioral of enable_generator is
+architecture behavioral of EnableGenerator is
     -- Divisor para gerar o enable na frequência correta
     constant DIVISOR     : integer := CLK_FREQ / (SINE_FREQ * TABLE_SIZE);
     signal counter       : integer range 0 to DIVISOR-1 := 0;

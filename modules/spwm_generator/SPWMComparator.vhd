@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity spwm_comparator is
+entity SPWMComparator is
     generic (
         DATA_WIDTH : integer := 32
     );
@@ -13,9 +13,9 @@ entity spwm_comparator is
         triangular : in  std_logic_vector(DATA_WIDTH-1 downto 0);
         spwm_out   : out std_logic
     );
-end spwm_comparator;
+end SPWMComparator;
 
-architecture Behavioral of spwm_comparator is
+architecture Behavioral of SPWMComparator is
     signal sine_signed : signed(DATA_WIDTH-1 downto 0);
     signal tri_signed  : signed(DATA_WIDTH-1 downto 0);
     

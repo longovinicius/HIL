@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity triangular_generator is
+entity TriangularWave is
     generic (
         CLK_FREQ        : integer := 100_000_000;  -- Clock de entrada (100 MHz)
         SWITCHING_FREQ  : integer := 10_000;       -- Frequência de chaveamento (10 kHz)
@@ -13,9 +13,9 @@ entity triangular_generator is
         rst       : in  std_logic;
         triangular: out std_logic_vector(DATA_WIDTH-1 downto 0)
     );
-end triangular_generator;
+end TriangularWave;
 
-architecture Behavioral of triangular_generator is
+architecture Behavioral of TriangularWave is
     -- FIXO em 8 bits para o contador interno
     constant TRIANGULAR_BITS : integer := 8;
     constant MAX_VALUE : signed(TRIANGULAR_BITS-1 downto 0) := to_signed(2**(TRIANGULAR_BITS-1) - 1, TRIANGULAR_BITS);   -- +127

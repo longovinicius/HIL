@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity sine_top is
+entity SineGenerator is
     generic (
         CLK_FREQ    : integer := 100_000_000;  -- Clock de entrada (100 MHz)
         SINE_FREQ   : integer := 60;           -- Frequência da senoide (60 Hz)
@@ -14,13 +14,13 @@ entity sine_top is
         rst     : in  std_logic;
         dout    : out std_logic_vector(DATA_WIDTH-1 downto 0)
     );
-end sine_top;
+end SineGenerator;
 
-architecture structural of sine_top is
+architecture structural of SineGenerator is
     signal enable_int : std_logic; -- Sinal interno de enable
 begin
     -- Contador para gerar o enable
-    enable_inst: entity work.enable_generator
+    enable_inst: entity work.EnableGenerator
         generic map (
             CLK_FREQ    => CLK_FREQ,
             SINE_FREQ   => SINE_FREQ,
@@ -33,7 +33,7 @@ begin
         );
 
     -- Gerador de senoide com LUT
-    sine_gen_inst: entity work.sine_generator
+    sine_gen_inst: entity work.SineLUT
         generic map (
             TABLE_SIZE  => TABLE_SIZE,
             DATA_WIDTH  => DATA_WIDTH,
