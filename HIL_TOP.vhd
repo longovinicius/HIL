@@ -7,7 +7,7 @@
 --!
 --! \version    1.0
 --!
---! \copyright	Copyright (c) 2024 WEG - All Rights reserved.
+--! \copyright	Copyright (c) 2025 - All Rights reserved.
 --!
 --! \note		Target devices : No specific target
 --! \note		Tool versions  : No specific tool
@@ -35,7 +35,8 @@ entity HIL_TOP is
         GPIO_SW_C               : in std_logic;
 
         FT4232_B_UART_RX        : out std_logic;
-        PMOD6_PIN3_R            : out std_logic        
+        PMOD6_PIN3_R            : out std_logic;
+        PMOD6_PIN4_R            : out std_logic       
 );
 end entity HIL_TOP;
 
@@ -51,6 +52,7 @@ architecture arch of HIL_TOP is
     constant START_PERIOD       : integer := 200; 
     constant SERIAL_BAUD_RATE   : integer := 1_042_000;
     constant SERIAL_INTERVAL_US : integer := 200;
+    constant PWM_RESOLUTION     : integer := 12;
     
     constant L1                 : real := 1.0e-3;
     constant R1                 : real := 0.1;
@@ -117,6 +119,7 @@ architecture arch of HIL_TOP is
 
     signal pmod_sync_s1         : std_logic;
     signal pmod_sync_s2         : std_logic;
+    signal x3_pwm_out_sig       : std_logic;
 
     signal serial_curr_L2_o     : std_logic; 
 
@@ -228,11 +231,29 @@ begin
             data_in_i         => Xvec_current_o_sig(3),
             tx_o              => serial_curr_L2_o
         );
+
+    --------------------------------------------------------------------------
+    -- Fixed Point to PWM Converter
+    --------------------------------------------------------------------------
+    PWM_Converter_X3_inst : entity work.FixedToPwmConverter
+        generic map (
+            CLK_FREQ                => CLK_FREQ,
+            PWM_RESOLUTION_BITS     => PWM_RESOLUTION,
+            FP_INPUT_BITS           => FP_TOTAL_BITS,
+            FP_FRACTION_BITS        => FP_FRACTION_BITS
+        )
+        port map (
+            sysclk            => sysclk_200mhz,
+            reset_n           => reset_n,
+            fixed_point_in    => Xvec_current_o_sig(3),
+            pwm_out           => x3_pwm_out_sig
+        );
     --------------------------------------------------------------------------
     -- Output signals
     --------------------------------------------------------------------------
     GPIO_LED0 <= busy_o_sig;
     FT4232_B_UART_RX <= serial_curr_L2_o;
     PMOD6_PIN3_R <= serial_curr_L2_o;
+    PMOD6_PIN4_R <= x3_pwm_out_sig; 
 
 end architecture arch;
