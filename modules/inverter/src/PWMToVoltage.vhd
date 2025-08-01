@@ -7,7 +7,7 @@
 --!
 --! \version    1.0
 --!
---! \copyright	Copyright (c) 2024 - All Rights reserved.
+--! \copyright	Copyright (c) 2025 - All Rights reserved.
 --!
 --! \note		Target devices : No specific target
 --! \note		Tool versions  : No specific tool

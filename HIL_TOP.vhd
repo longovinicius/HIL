@@ -64,8 +64,9 @@ architecture arch of HIL_TOP is
     constant VDC_VOLTAGE        : integer := 400;
     constant RESET_TRSHD        : integer := 100;
     constant START_PERIOD       : integer := 250;
-    constant SERIAL_BAUD_RATE   : integer := 1_042_000;
-    constant SERIAL_INTERVAL_US : integer := 200;
+    --constant SERIAL_BAUD_RATE   : integer := 1_042_000;
+    constant SERIAL_BAUD_RATE   : integer := 921600; -- around 75us to send one packet
+    constant SERIAL_INTERVAL_US : integer := 500; 
     constant PWM_RESOLUTION     : integer := 12;
     
     constant L1                 : real := 1.0e-3;
@@ -167,7 +168,7 @@ begin
     end process;
 
     --------------------------------------------------------------------------
-    -- periodic start signal
+    -- Periodic start signal
     --------------------------------------------------------------------------
     process (sysclk_250mhz)
     begin

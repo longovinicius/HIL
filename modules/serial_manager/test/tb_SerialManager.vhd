@@ -35,9 +35,9 @@ end entity tb_SerialManager;
 architecture sim of tb_SerialManager is
 
     -- Constantes do Testbench
-    constant CLK_FREQ_TB      : integer := 100_000_000; -- Clock de 100MHz
-    constant CLK_PERIOD       : time    := 10 ns;
-    constant BAUD_RATE_TB     : integer := 1_042_000;
+    constant CLK_FREQ_TB      : integer := 250_000_000; -- Clock de 100MHz
+    constant CLK_PERIOD       : time    := 4 ns;
+    constant BAUD_RATE_TB     : integer := 921600;
 
     -- Um pacote de dados de 42 bits constante para o teste
     -- 42 bits = 10.5 dígitos hexadecimais. O 11º dígito só pode ir até 3.
