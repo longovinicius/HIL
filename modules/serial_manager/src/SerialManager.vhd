@@ -7,7 +7,7 @@
 --!
 --! \version    1.0
 --!
---! \copyright	Copyright (c) 2024 WEG - All Rights reserved.
+--! \copyright	Copyright (c) 2025 - All Rights reserved.
 --!
 --! \note		Target devices : No specific target
 --! \note		Tool versions  : No specific tool
@@ -138,7 +138,7 @@ begin
     --------------------------------------------------------------------------
     -- Uart TX Instantiation
     --------------------------------------------------------------------------
-    uart_tx_inst : entity work.Uart_TX
+    uart_tx_inst : entity work.UartTX
     generic map(
         DATA_WIDTH      => 8,
         START_BIT       => '0',
