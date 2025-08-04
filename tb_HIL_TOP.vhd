@@ -49,11 +49,8 @@ architecture sim of tb_HIL_TOP is
     signal sysclk_p_tb          : std_logic;
     signal sysclk_n_tb          : std_logic;
     signal pmod_in_tb           : std_logic;
-    signal gpio_led0_tb         : std_logic;
-    signal gpio_sw_c_tb         : std_logic := '0'; 
 
-    signal serial_data_out_tb   : std_logic_vector(0 to 4);
-    signal serial_curr_L2_out_tb: std_logic;
+    signal Xvec_current_sig_tb  : vector_fp_t(0 to  4);
 
 begin
 
@@ -103,11 +100,22 @@ begin
             SYSCLK_P         => sysclk_p_tb,
             SYSCLK_N         => sysclk_n_tb,
             PMOD6_PIN1_R     => pmod_in_tb,
-            GPIO_LED0        => gpio_led0_tb,
-            GPIO_SW_C        => gpio_sw_c_tb,
-            FT4232_B_UART_RX  => serial_curr_L2_out_tb,
-            PMOD6_PIN3_R => open
+            FT4232_B_UART_RX => open,
+            PMOD5_PIN1_R     => open,
+            PMOD5_PIN2_R     => open,
+            PMOD5_PIN3_R     => open,
+            PMOD5_PIN4_R     => open,
+            PMOD5_PIN7_R     => open,
+            PMOD4_PIN1_R     => open,
+            PMOD4_PIN2_R     => open,
+            PMOD4_PIN3_R     => open,
+            PMOD4_PIN4_R     => open,
+            PMOD4_PIN7_R     => open,
+            GPIO_LED0        => open
         );
+
+    -- Note: Internal signal access may require simulator-specific syntax
+    -- Xvec_current_sig_tb <= UUT_HIL.Xvec_current_o_sig;
 
     ----------------------------------------------------
     -- End simulation stimulus
