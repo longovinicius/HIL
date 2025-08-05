@@ -35,11 +35,6 @@ entity HIL_TOP is
 
         -- Digital Output
         FT4232_B_UART_RX        : out std_logic;
-        PMOD5_PIN1_R            : out std_logic;
-        PMOD5_PIN2_R            : out std_logic;
-        PMOD5_PIN3_R            : out std_logic;
-        PMOD5_PIN4_R            : out std_logic;
-        PMOD5_PIN7_R            : out std_logic;
 
         -- Analog Output
         PMOD4_PIN1_R            : out std_logic;
@@ -50,7 +45,6 @@ entity HIL_TOP is
         
         -- LED
         GPIO_LED0               : out std_logic
-
 );
 end entity HIL_TOP;
 
@@ -63,10 +57,13 @@ architecture arch of HIL_TOP is
     constant N_IN               : natural := 2;
     constant VDC_VOLTAGE        : integer := 400;
     constant RESET_TRSHD        : integer := 100;
-    constant START_PERIOD       : integer := 250;
-    --constant SERIAL_BAUD_RATE   : integer := 1_042_000;
-    constant SERIAL_BAUD_RATE   : integer := 921600; -- around 75us to send one packet
-    constant SERIAL_INTERVAL_US : integer := 500; 
+
+    constant SIMUL_PERIOD       : real    := 1.0e-7;  
+    constant START_PERIOD       : integer := integer(SIMUL_PERIOD * real(CLK_FREQ));
+
+    constant SERIAL_BAUD_RATE   : integer := 3_000_000; 
+    constant SERIAL_INTERVAL_US : integer := 25;
+    constant SERIAL_STATE_SENT  : integer := 4; 
     constant PWM_RESOLUTION     : integer := 12;
     
     constant L1                 : real := 1.0e-3;
@@ -77,7 +74,7 @@ architecture arch of HIL_TOP is
     constant Cd                 : real := 1.65e-6;
     constant Rd                 : real := 25.9;
     constant Ld                 : real := 5.1e-3;
-    constant Ts                 : real := 1.0e-6;
+    constant Ts                 : real := SIMUL_PERIOD;
 
     constant a00                : real := 1.0 - (R1/L1)*Ts; 
     constant a03                : real := (-1.0/L1)*Ts; 
@@ -223,7 +220,7 @@ begin
         Xvec_current_o => Xvec_current_o_sig,
         busy_o         => busy_o_sig
     );
-
+    
     --------------------------------------------------------------------------
     -- Serial Manager Generators 
     --------------------------------------------------------------------------
@@ -266,12 +263,7 @@ begin
     --------------------------------------------------------------------------
     GPIO_LED0 <= busy_o_sig;
 
-    FT4232_B_UART_RX <= serial_out_vector(0);
-    PMOD5_PIN1_R <= serial_out_vector(0);
-    PMOD5_PIN2_R <= serial_out_vector(1);
-    PMOD5_PIN3_R <= serial_out_vector(2);
-    PMOD5_PIN4_R <= serial_out_vector(3);
-    PMOD5_PIN7_R <= serial_out_vector(4);
+    FT4232_B_UART_RX <= serial_out_vector(SERIAL_STATE_SENT);
 
     PMOD4_PIN1_R <= pwm_out_vector(0);
     PMOD4_PIN2_R <= pwm_out_vector(1);
