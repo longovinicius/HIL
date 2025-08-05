@@ -128,6 +128,7 @@ architecture arch of HIL_TOP is
     signal pmod_sync_s2         : std_logic;
 
     signal serial_out_vector    : std_logic_vector(0 to N_SS - 1);
+    signal multi_serial_out     : std_logic;
     signal pwm_out_vector       : std_logic_vector(0 to N_SS - 1);
 
 begin
@@ -225,20 +226,32 @@ begin
     --------------------------------------------------------------------------
     -- Serial Manager Generators 
     --------------------------------------------------------------------------
-    Serial_Generators: for i in 0 to N_SS - 1 generate
-        SerialManager_inst : entity work.SerialManager
-            generic map (
-                CLK_FREQ          => CLK_FREQ,
-                SEND_INTERVAL_US  => SERIAL_INTERVAL_US,
-                BAUD_RATE         => SERIAL_BAUD_RATE
-            )
-            port map (
-                sysclk            => sysclk_250mhz,
-                reset_n           => reset_n,
-                data_in_i         => Xvec_current_o_sig(i),
-                tx_o              => serial_out_vector(i)
-            );
-    end generate Serial_Generators;
+    SerialManager_inst : entity work.SerialManager
+        generic map (
+            CLK_FREQ          => CLK_FREQ,
+            SEND_INTERVAL_US  => SERIAL_INTERVAL_US,
+            BAUD_RATE         => SERIAL_BAUD_RATE
+        )
+        port map (
+            sysclk            => sysclk_250mhz,
+            reset_n           => reset_n,
+            data_in_i         => Xvec_current_o_sig(SERIAL_STATE_SENT),
+            tx_o              => serial_out_vector(SERIAL_STATE_SENT)
+        );
+    
+
+    MultiStateSerialManager_inst : entity work.MultiStateSerialManager
+        generic map (
+            CLK_FREQ          => CLK_FREQ,
+            SEND_INTERVAL_US  => 150,
+            BAUD_RATE         => SERIAL_BAUD_RATE    
+        )
+        port map (
+            sysclk            => sysclk_250mhz,
+            reset_n           => reset_n,
+            states_data_i     => Xvec_current_o_sig,
+            tx_o              => multi_serial_out
+        );
 
     --------------------------------------------------------------------------
     -- Fixed Point to PWM Converter Generators 
@@ -264,7 +277,8 @@ begin
     --------------------------------------------------------------------------
     GPIO_LED0 <= busy_o_sig;
 
-    FT4232_B_UART_RX <= serial_out_vector(SERIAL_STATE_SENT);
+    --FT4232_B_UART_RX <= serial_out_vector(SERIAL_STATE_SENT);
+    FT4232_B_UART_RX <= multi_serial_out;
 
     PMOD4_PIN1_R <= pwm_out_vector(0);
     PMOD4_PIN2_R <= pwm_out_vector(1);

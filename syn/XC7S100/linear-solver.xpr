@@ -141,6 +141,12 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../modules/serial_manager/src/MultiStateSerialManager.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../HIL_TOP.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
