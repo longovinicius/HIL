@@ -53,10 +53,11 @@ architecture arch of HIL_TOP is
     -- Constants
     --------------------------------------------------------------------------
     constant CLK_FREQ           : integer := 250_000_000;
+    constant RESET_TRSHD        : integer := 100;
+
     constant N_SS               : natural := 5;
     constant N_IN               : natural := 2;
     constant VDC_VOLTAGE        : integer := 400;
-    constant RESET_TRSHD        : integer := 100;
 
     constant SIMUL_PERIOD       : real    := 1.0e-7;  
     constant START_PERIOD       : integer := integer(SIMUL_PERIOD * real(CLK_FREQ));
