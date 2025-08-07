@@ -1,0 +1,11 @@
+# Ajustes de fase para cada variável (em segundos)
+# Valores positivos atrasam o sinal da FPGA
+# Valores negativos adiantam o sinal da FPGA
+
+AJUSTES_FASE = {
+    'vcf': -0.000200,
+    'vcd': -0.010100,
+    'il1': 0.000000,
+    'il2': 0.000000,
+    'ild': -0.000200,
+}
