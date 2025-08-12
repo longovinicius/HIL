@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 import os
+PHASE_STEP = 1e-5
 
 # Variáveis globais para os dados
 dados_globais = {}
@@ -71,15 +72,16 @@ def carregar_dados_chunked(filename, **kwargs):
 
 def atualizar_graficos(val=None):
     """
-    Atualiza os gráficos quando os sliders são movidos.
+    Updates plots when sliders move.
     """
     global dados_globais
     
     for i, var in enumerate(dados_globais['variaveis_validas']):
-        # Pega o valor do slider
-        ajuste_fase = dados_globais['sliders'][var].val
-        
-        # Calcula novo deslocamento
+        slider_obj = dados_globais['sliders'][var]
+        raw_val = slider_obj.val
+        # Quantize to PHASE_STEP to guarantee 1e-5 resolution
+        ajuste_fase = round(raw_val / PHASE_STEP) * PHASE_STEP
+
         deslocamento_original = dados_globais['resultados_sync'][var]['deslocamento']
         deslocamento_total = deslocamento_original + ajuste_fase
         
@@ -134,11 +136,10 @@ def salvar_configuracao():
         
         for var in dados_globais['variaveis_validas']:
             if var in dados_globais['sliders']:
-                ajuste = dados_globais['sliders'][var].val
+                ajuste_raw = dados_globais['sliders'][var].val
+                ajuste = round(ajuste_raw / PHASE_STEP) * PHASE_STEP
                 f.write(f"    '{var}': {ajuste:.6f},\n")
                 print(f"{var.upper()}: {ajuste:+.6f}s")
-        
-        f.write("}\n")
     
     print(f"\nConfiguração salva em: {ajustes_path}")
 
@@ -325,8 +326,9 @@ def plotar_comparativo_interativo():
         ax_slider = fig.add_axes([0.68, y_pos, slider_width, slider_height])
         
         # Slider (-0.02s a +0.02s, que é aproximadamente um período)
-        slider = Slider(ax_slider, f'{var.upper()}', 
-                       -0.02, 0.02, valinit=0, valfmt='%+.6f',
+        slider = Slider(ax_slider, f'{var.upper()}',
+                       -0.02, 0.02, valinit=0,
+                       valfmt='%+.6f', valstep=PHASE_STEP,
                        facecolor='lightblue', alpha=0.8)
         slider.on_changed(atualizar_graficos)
         sliders[var] = slider
