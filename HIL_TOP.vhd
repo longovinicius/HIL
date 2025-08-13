@@ -52,46 +52,50 @@ architecture arch of HIL_TOP is
     --------------------------------------------------------------------------
     -- Constants
     --------------------------------------------------------------------------
-    constant CLK_FREQ           : integer := 250_000_000;
-    constant RESET_TRSHD        : integer := 100;
+    constant CLK_FREQ                   : integer := 250_000_000;
+    constant RESET_TRSHD                : integer := 100;
 
-    constant N_SS               : natural := 5;
-    constant N_IN               : natural := 2;
-    constant VDC_VOLTAGE        : integer := 400;
+    constant N_SS                       : natural := 5;
+    constant N_IN                       : natural := 2;
+    constant VDC_VOLTAGE                : integer := 400;
 
-    constant SIMUL_PERIOD       : real    := 1.0e-7;  
-    constant START_PERIOD       : integer := integer(SIMUL_PERIOD * real(CLK_FREQ));
+    constant SIMUL_PERIOD               : real    := 1.0e-7;  
+    constant START_PERIOD               : integer := integer(SIMUL_PERIOD * real(CLK_FREQ));
 
-    constant SERIAL_BAUD_RATE   : integer := 3_000_000; 
-    constant SERIAL_INTERVAL_US : integer := 25;
-    constant SERIAL_STATE_SENT  : integer := 4; 
-    constant PWM_RESOLUTION     : integer := 12;
+    constant SERIAL_BAUD_RATE           : integer := 3_000_000; 
+    constant USE_MULTI_STATE_SERIAL     : boolean := true; 
+
+    constant MULTI_STATE_INTERVAL_US    : integer := 150; 
+    constant SINGLE_STATE_INTERVAL_US   : integer := 25;
+    constant SINGLE_STATE_SENT          : integer := 4; 
+    constant PWM_RESOLUTION             : integer := 12;
     
-    constant L1                 : real := 1.0e-3;
-    constant R1                 : real := 0.1;
-    constant Cf                 : real := 3.3e-6;
-    constant L2                 : real := 0.92e-3;
-    constant R2                 : real := 0.1;
-    constant Cd                 : real := 1.65e-6;
-    constant Rd                 : real := 25.9;
-    constant Ld                 : real := 5.1e-3;
-    constant Ts                 : real := SIMUL_PERIOD;
+    
+    constant L1                         : real := 1.0e-3;
+    constant R1                         : real := 0.1;
+    constant Cf                         : real := 3.3e-6;
+    constant L2                         : real := 0.92e-3;
+    constant R2                         : real := 0.1;
+    constant Cd                         : real := 1.65e-6;
+    constant Rd                         : real := 25.9;
+    constant Ld                         : real := 5.1e-3;
+    constant Ts                         : real := SIMUL_PERIOD;
 
-    constant a00                : real := 1.0 - (R1/L1)*Ts; 
-    constant a03                : real := (-1.0/L1)*Ts; 
-    constant a13                : real := (1.0/Ld)*Ts;  
-    constant a14                : real := (-1.0/Ld)*Ts; 
-    constant a22                : real := 1.0 - (R2/L2)*Ts; 
-    constant a23                : real := (1.0/L2)*Ts; 
-    constant a30                : real := (1.0/Cf)*Ts; 
-    constant a31                : real := (-1.0/Cf)*Ts; 
-    constant a32                : real := (-1.0/Cf)*Ts; 
-    constant a33                : real := 1.0 - (1.0/(Cf*Rd))*Ts; 
-    constant a34                : real := (1.0/(Cf*Rd))*Ts; 
-    constant a41                : real := (1.0/Cd)*Ts;
-    constant a43                : real := (1.0/(Cd*Rd))*Ts; 
-    constant a44                : real := 1.0 - (1.0/(Cd*Rd))*Ts; 
-    constant b00                : real := (1.0/L1)*Ts;
+    constant a00                        : real := 1.0 - (R1/L1)*Ts; 
+    constant a03                        : real := (-1.0/L1)*Ts; 
+    constant a13                        : real := (1.0/Ld)*Ts;  
+    constant a14                        : real := (-1.0/Ld)*Ts; 
+    constant a22                        : real := 1.0 - (R2/L2)*Ts; 
+    constant a23                        : real := (1.0/L2)*Ts; 
+    constant a30                        : real := (1.0/Cf)*Ts; 
+    constant a31                        : real := (-1.0/Cf)*Ts; 
+    constant a32                        : real := (-1.0/Cf)*Ts; 
+    constant a33                        : real := 1.0 - (1.0/(Cf*Rd))*Ts; 
+    constant a34                        : real := (1.0/(Cf*Rd))*Ts; 
+    constant a41                        : real := (1.0/Cd)*Ts;
+    constant a43                        : real := (1.0/(Cd*Rd))*Ts; 
+    constant a44                        : real := 1.0 - (1.0/(Cd*Rd))*Ts; 
+    constant b00                        : real := (1.0/L1)*Ts;
 
 
     constant AMATRIX_C : matrix_fp_t(0 to N_SS - 1, 0 to N_SS - 1) := (
@@ -127,7 +131,7 @@ architecture arch of HIL_TOP is
     signal pmod_sync_s1         : std_logic;
     signal pmod_sync_s2         : std_logic;
 
-    signal serial_out_vector    : std_logic_vector(0 to N_SS - 1);
+    signal single_serial_out    : std_logic;
     signal multi_serial_out     : std_logic;
     signal pwm_out_vector       : std_logic_vector(0 to N_SS - 1);
 
@@ -226,32 +230,34 @@ begin
     --------------------------------------------------------------------------
     -- Serial Manager Generators 
     --------------------------------------------------------------------------
-    SerialManager_inst : entity work.SerialManager
-        generic map (
-            CLK_FREQ          => CLK_FREQ,
-            SEND_INTERVAL_US  => SERIAL_INTERVAL_US,
-            BAUD_RATE         => SERIAL_BAUD_RATE
-        )
-        port map (
-            sysclk            => sysclk_250mhz,
-            reset_n           => reset_n,
-            data_in_i         => Xvec_current_o_sig(SERIAL_STATE_SENT),
-            tx_o              => serial_out_vector(SERIAL_STATE_SENT)
-        );
-    
-
-    MultiStateSerialManager_inst : entity work.MultiStateSerialManager
-        generic map (
-            CLK_FREQ          => CLK_FREQ,
-            SEND_INTERVAL_US  => 150,
-            BAUD_RATE         => SERIAL_BAUD_RATE    
-        )
-        port map (
-            sysclk            => sysclk_250mhz,
-            reset_n           => reset_n,
-            states_data_i     => Xvec_current_o_sig,
-            tx_o              => multi_serial_out
-        );
+    MultiStateSerial_Gen: if USE_MULTI_STATE_SERIAL generate
+        MultiStateSerialManager_inst : entity work.MultiStateSerialManager
+            generic map (
+                CLK_FREQ          => CLK_FREQ,
+                SEND_INTERVAL_US  => MULTI_STATE_INTERVAL_US,
+                BAUD_RATE         => SERIAL_BAUD_RATE    
+            )
+            port map (
+                sysclk            => sysclk_250mhz,
+                reset_n           => reset_n,
+                states_data_i     => Xvec_current_o_sig,
+                tx_o              => multi_serial_out
+            );
+    end generate MultiStateSerial_Gen;
+    SingleStateSerial_Gen: if not USE_MULTI_STATE_SERIAL generate
+        SerialManager_inst : entity work.SerialManager
+            generic map (
+                CLK_FREQ          => CLK_FREQ,
+                SEND_INTERVAL_US  => SINGLE_STATE_INTERVAL_US,
+                BAUD_RATE         => SERIAL_BAUD_RATE
+            )
+            port map (
+                sysclk            => sysclk_250mhz,
+                reset_n           => reset_n,
+                data_in_i         => Xvec_current_o_sig(SINGLE_STATE_SENT),
+                tx_o              => single_serial_out
+            );
+    end generate SingleStateSerial_Gen;
 
     --------------------------------------------------------------------------
     -- Fixed Point to PWM Converter Generators 
@@ -277,8 +283,8 @@ begin
     --------------------------------------------------------------------------
     GPIO_LED0 <= busy_o_sig;
 
-    --FT4232_B_UART_RX <= serial_out_vector(SERIAL_STATE_SENT);
-    FT4232_B_UART_RX <= multi_serial_out;
+    FT4232_B_UART_RX <= multi_serial_out when USE_MULTI_STATE_SERIAL 
+                            else single_serial_out;
 
     PMOD4_PIN1_R <= pwm_out_vector(0);
     PMOD4_PIN2_R <= pwm_out_vector(1);
