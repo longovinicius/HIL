@@ -42,6 +42,15 @@ Y_AXIS_FIXED = False   # Mude para False para habilitar o auto-ajuste
 Y_AXIS_MIN = -0.5
 Y_AXIS_MAX = 0.5
 
+# NOVO: Taxa de amostragem para conversão de amostras para tempo
+TAXA_AMOSTRAGEM_US = 150  # 150 microsegundos
+TAXA_AMOSTRAGEM_MS = TAXA_AMOSTRAGEM_US / 1000  # 0.15 ms
+
+# NOVO: Configurações de fonte (aumentadas)
+FONTSIZE_TITLE = 20
+FONTSIZE_LABELS = 16
+FONTSIZE_LEGEND = 14
+
 # --- Fim do Bloco de Configuração ---
 
 
@@ -77,15 +86,18 @@ fig, ax = plt.subplots(figsize=(FIG_WIDTH_INCHES, FIG_HEIGHT_INCHES))
 plt.subplots_adjust(bottom=0.15)
 
 # Nomes personalizados para a legenda
-nomes_estados = ['I_L1', 'I_Ld', 'I_L2', 'V_Cf', 'V_Cd']
+nomes_estados = ['Corrente L1', 'Corrente Ld', 'Corrente L2', 'Tensão Cf', 'Tensão Cd']
 
 linhas = [ax.plot([], [], label=nomes_estados[i])[0] for i in range(NUM_ESTADOS)]
-ax.set_title('Visualizador em Tempo Real')
-ax.set_xlabel('Amostras')
-ax.set_ylabel('Corrente(A)/Tensão(V)')
-ax.legend(loc='upper right')
+ax.set_title('Visualizador em Tempo Real', fontsize=FONTSIZE_TITLE, fontweight='bold')
+ax.set_xlabel('Tempo (ms)', fontsize=FONTSIZE_LABELS, fontweight='bold')
+ax.set_ylabel('Corrente(A)/Tensão(V)', fontsize=FONTSIZE_LABELS, fontweight='bold')
+ax.legend(loc='upper right', fontsize=FONTSIZE_LEGEND)
 ax.grid(True)
-ax.set_xlim(0, GRAPH_WINDOW_SIZE) # Fixa o eixo X
+
+# Configura eixo X em milissegundos
+tempo_max_ms = GRAPH_WINDOW_SIZE * TAXA_AMOSTRAGEM_MS
+ax.set_xlim(0, tempo_max_ms)
 
 # Usa as novas constantes para fixar o eixo Y
 if Y_AXIS_FIXED:
@@ -152,13 +164,15 @@ def update(frame):
     
     # ATUALIZAÇÃO DO GRÁFICO (sempre acontece, pausado ou não)
     for i, linha in enumerate(linhas):
-        linha.set_data(range(len(dados_estados[i])), dados_estados[i])
+        # Converte amostras para tempo em milissegundos
+        tempo_ms = [j * TAXA_AMOSTRAGEM_MS for j in range(len(dados_estados[i]))]
+        linha.set_data(tempo_ms, dados_estados[i])
     
     # Atualiza o título para mostrar o status
     if pausado:
-        ax.set_title('Visualizador em Tempo Real - PAUSADO')
+        ax.set_title('Visualizador em Tempo Real - PAUSADO', fontsize=FONTSIZE_TITLE, fontweight='bold')
     else:
-        ax.set_title('Visualizador em Tempo Real')
+        ax.set_title('Visualizador em Tempo Real', fontsize=FONTSIZE_TITLE, fontweight='bold')
     
     # Se o eixo Y não estiver fixo, permite o auto-ajuste
     if not Y_AXIS_FIXED:
