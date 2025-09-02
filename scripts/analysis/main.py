@@ -365,7 +365,7 @@ def plotar_comparativo_lite():
             # Plot triple
             ax = axes[i]
             # ax.plot(psim_ss_original['Time'], psim_ss_original[mapa_colunas_psim[var]], label='PSIM (Original)', color='lightblue', linewidth=1.2)
-            ax.plot(psim_ss['Time'], psim_ss[mapa_colunas_psim[var]], label='PSIM (Subamostrado)', color='blue', linestyle='--', marker='.', markersize=3)
+            ax.plot(psim_ss['Time'], psim_ss[mapa_colunas_psim[var]], label='PSIM', color='blue', linestyle='--', marker='.', markersize=3)
             ax.plot(df_fpga['Time_Aligned'], df_fpga['DadoReal'], label='FPGA', color='red', linestyle=':', marker='.', markersize=3, alpha=0.85)
             ax.set_title(var.upper(), fontsize=12, fontweight='bold')
             ax.set_ylabel(f"Amp ({unidades.get(var,'')})")

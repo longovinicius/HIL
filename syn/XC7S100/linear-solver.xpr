@@ -135,13 +135,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../modules/serial_manager/src/SerialManager.vhd">
+      <File Path="$PPRDIR/../../modules/serial_manager/src/MultiStateSerialManager.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../modules/serial_manager/src/MultiStateSerialManager.vhd">
+      <File Path="$PPRDIR/../../modules/serial_manager/src/SerialManager.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
