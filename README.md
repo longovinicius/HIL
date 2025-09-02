@@ -5,8 +5,11 @@ Hardware-in-the-Loop (HIL) is a testing technique that integrates real physical 
 
 ![FPGA Simulation](docs/images/System_diagram.png)
 
-This project aims to simulate in real time the behavior of a 2-level monophasic inverter connected to a low pass filter connected to grid. 
-It was developed in a FPGA from Xilinx-Spartan7 XC7S100. Its ports on the Top Level and constraints are board specific, but the inner system is inteded to be generic for any Xilinx board. The PSIM model used as reference is shown below.
+This project aims to simulate in real time the behavior of a 2-level monophasic inverter connected to a low pass filter connected to grid. The PSIM model used as reference is shown below. PSIM's simulation was used as reference, and compared with real-time data.
+
+![PSIM Simulation](docs/images/psim.png)
+
+It was developed in a FPGA from Xilinx-Spartan7 XC7S100. Its ports on the Top Level and constraints are board specific, but the inner system is inteded to be generic for any Xilinx board. 
 
 ![XC7S100](docs/images/XC7S100.png)
 
@@ -16,10 +19,4 @@ This simulation could eventually be used to test and validate control algorithms
 ![Real-time Simulation HIL](docs\images\HIL.jpg)
 
 
-The simulated circuit is shown below: 
-
-![PSIM Simulation](docs/images/psim.png)
-
-
-PSIM's simulation was used as reference. The HIL simulation was runned in real-time with the same conditions as PSIMs model. Data was then sent from FPGA to PC via UART, to be saved and compared with PSIMs simulation. 
 
